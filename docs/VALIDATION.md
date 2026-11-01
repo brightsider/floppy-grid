@@ -16,7 +16,4 @@ Not verified: live authenticated Floppy account, deployment CORS, physical
 mobile PWA installation, browser interaction automation. No live credentials
 were supplied. These remain deployment acceptance checks.
 
-Git push and GitHub connector branch creation were both rejected with HTTP 403.
-Commits remain on local feat/initial-pwa; a portable Git bundle accompanies the
-checkout. Reauthorize the GitHub integration for repository Contents write access
-before pushing.
+Source is committed and published on the `feat/initial-pwa` feature branch.
