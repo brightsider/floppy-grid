@@ -11,3 +11,5 @@ jq -n '{FLOPPY_URL:env.FLOPPY_URL,FLOPPY_TOKEN:env.FLOPPY_TOKEN}' |
   { printf 'window.__FLOOPY_CONFIG__ = '; cat; printf ';\n'; } > /usr/share/nginx/html/config.js
 export PORT
 envsubst '${PORT}' < /opt/floopy/default.conf.template > /etc/nginx/conf.d/default.conf
+
+chmod 644 /usr/share/nginx/html/config.js
