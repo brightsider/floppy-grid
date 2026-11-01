@@ -1,3 +1,5 @@
+import { CachedHome } from './CachedHome';
+import { serverCacheEnabled } from './config/runtime';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { libraryOptions, metadataTask, queryClient, seasonOptions, showOptions } from './api/queries';
@@ -5,7 +7,7 @@ import { active, posterStatus } from './lib/status';
 import { compareUpNext, isTerminal, upcomingForQueue } from './lib/upNext';
 import { ErrorState, LoadingGrid, Poster } from './components/Shared';
 
-export function Home() {
+function DirectHome() {
   const library=useQuery(libraryOptions);
   const rows=(library.data || []).filter(active);
   const upcoming=useQueries({queries:rows.map(row=>({
@@ -46,3 +48,5 @@ export function Home() {
     </>}
   </main>;
 }
+
+export function Home() {return serverCacheEnabled() ? <CachedHome/> : <DirectHome/>;}

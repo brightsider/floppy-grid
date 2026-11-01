@@ -17,7 +17,7 @@ function EpisodeRow({episode,source,id,season}:{episode:TrackedMedia;source:stri
   const mutation=useMutation({
     mutationKey:['watch',source,id],
     scope:{id:`watch-${source}-${id}`},
-    mutationFn:()=>watchEpisode(source,id,season,number!,crypto.randomUUID()),
+    mutationFn:()=>watchEpisode(source,id,season,number!,(crypto.randomUUID?.() || Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join(''))),
     onMutate:async()=>{
       setError('');
       await queryClient.cancelQueries({queryKey:key});
@@ -35,6 +35,7 @@ function EpisodeRow({episode,source,id,season}:{episode:TrackedMedia;source:stri
     onSettled:async()=>{
       await Promise.all([
         queryClient.invalidateQueries({queryKey:['library']}),
+        queryClient.invalidateQueries({queryKey:['feed']}),
         queryClient.invalidateQueries({queryKey:['show',source,id]}),
         queryClient.invalidateQueries({queryKey:key}),
         queryClient.invalidateQueries({queryKey:['upcoming',source,id]}),

@@ -1,5 +1,5 @@
 import { QueryClient, queryOptions } from '@tanstack/react-query';
-import { ApiError, getLibrary, getSeason, getShow } from './client';
+import { ApiError, getFeed, getLibrary, getSeason, getShow } from './client';
 export const queryClient=new QueryClient({defaultOptions:{queries:{staleTime:60000,refetchOnWindowFocus:'always',refetchOnReconnect:'always',retry:(count,error)=>!(error instanceof ApiError && [401,403,404].includes(error.status)) && count<1},mutations:{retry:false}}});
 export const libraryOptions=queryOptions({queryKey:['library'],queryFn:({signal})=>getLibrary(signal)});
 export const showOptions=(source:string,id:string)=>queryOptions({queryKey:['show',source,id],queryFn:({signal})=>getShow(source,id,signal)});
@@ -13,3 +13,5 @@ export async function metadataTask<T>(task:()=>Promise<T>):Promise<T> {
   try { return await task(); }
   finally { const next=queue.shift(); if(next) next(); else running--; }
 }
+
+export const feedOptions=queryOptions({queryKey:['feed'],queryFn:({signal})=>getFeed(false,signal),refetchInterval:query=>query.state.data?.refreshing || (query.state.data && !query.state.data.ready && !query.state.data.error) ? 3000 : 60000});
