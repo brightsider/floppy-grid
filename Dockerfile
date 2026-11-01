@@ -18,4 +18,4 @@ COPY docker/default.conf.template /opt/floopy/default.conf.template
 COPY --chmod=755 docker/40-runtime-config.sh /docker-entrypoint.d/40-runtime-config.sh
 ENV PORT=8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget -q -O /dev/null "http://127.0.0.1:${PORT}/health" || exit 1
+    CMD wget -Y off -q -O /dev/null "http://127.0.0.1:${PORT}/health" || exit 1
