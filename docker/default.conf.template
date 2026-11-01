@@ -1,0 +1,14 @@
+server {
+    listen ${PORT};
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    server_tokens off;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy no-referrer always;
+    location = /health { access_log off; default_type text/plain; return 200 'ok\n'; }
+    location = /config.js { add_header Cache-Control 'no-store' always; }
+    location = /sw.js { add_header Cache-Control 'no-cache' always; }
+    location = /index.html { add_header Cache-Control 'no-cache' always; }
+    location / { try_files $uri $uri/ /index.html; }
+}
