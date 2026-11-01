@@ -23,3 +23,7 @@ export interface CompleteMedia {
   related:{seasons?:TrackedMedia[];episodes?:TrackedMedia[]};
 }
 export interface Upcoming { date:string|null }
+export interface FeedEntry {row:TrackedMedia;next:Upcoming|null;lastAirDate:string|null}
+export interface FeedResponse {
+  ready:boolean;entries:FeedEntry[];updatedAt:string|null;refreshing:boolean;error:string|null;
+}
