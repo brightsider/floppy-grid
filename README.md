@@ -1,200 +1,209 @@
 # Floopy Grid
 
-A small, dark, poster-first TV tracking PWA for [Floppy](https://github.com/dannyvfilms/Floppy).
-Three posters across on iPhone, released episode counts, upcoming dates, and
-one-tap episode watches. Inspired by the compact poster focus of iShows 2;
-no iShows assets are used. Floppy remains the source of truth.
+A compact, dark TV tracking PWA for [Floppy](https://github.com/dannyvfilms/Floppy).
+Three posters across on iPhone, released episode counts, upcoming dates, seasons
+and one-tap watches. Inspired by iShows' poster focus; no iShows assets are used.
 
 ## Screenshots
 
-Placeholder: add Home and Show screenshots from your configured installation.
+Placeholder: Home and Show screenshots from a configured installation.
 
-## Architecture and API
+## Architecture
 
-React + TypeScript + Vite, React Router, TanStack Query, plain CSS, and
-vite-plugin-pwa. Nginx only serves static assets and runtime configuration;
-there is no backend, database access, or API proxy. The browser talks to Floppy.
-See [the API inspection](docs/API.md) for exact routes, source revision, typed
-response assumptions, scopes, and differences from the requested model.
+React, TypeScript, Vite, React Router, TanStack Query and plain CSS. The Docker
+container now includes a small Node 22 HTTP server using built-in modules only.
+It serves the static PWA, authenticates allowlisted Floppy requests and prepares
+an account-specific feed cache in `/data/feed.json`. There is no database.
+Floppy remains the source of truth. No React SSR is used: Vite's server build
+only bundles the HTTP/cache service.
 
-Home includes In progress TV shows, keeps shows with real upcoming episodes (including undated ones),
-and omits ended shows once their released backlog is finished. Counts come from
-Floppy's `episodes_left`; its `next_episode` is released-only, so upcoming
-schedules require season metadata. Details show all seasons, including specials.
-Season metadata work for home is bounded to three concurrent requests and
-cached for a minute. Large caught-up libraries may take longer to hydrate.
+This replaces the initial static Nginx/direct-browser architecture, following
+approval to add a server cache. Production browsers talk to Floopy Grid on the
+same origin. FLOPPY_TOKEN and FLOPPY_URL are **not exposed in config.js**. Runtime
+config.js contains only `SERVER_CACHE: true`. No rebuild is needed to change
+server URL, token, port, cache directory or refresh interval.
 
-Watches optimistically update episode state, revert on failure, update the home
-count after success, and invalidate library, season, show and upcoming queries.
-Writes are serialized per show and are not automatically retried. Foreground,
-focus, reconnect and midnight trigger refresh; there is no aggressive polling.
-Use the Home refresh button whenever needed. API data is held in memory only;
-the service worker caches the app shell, never API responses or config.js.
+The container fetches the fully paginated TV library and prepares upcoming data
+with at most three concurrent metadata requests. Successful snapshots are
+written atomically. The last good snapshot loads on startup and survives outages
+and container recreation when `/data` is mounted. A changed server URL or token
+invalidates a saved snapshot, preventing another account's cache from loading.
+First startup needs to build the feed; large libraries can take several minutes.
+Subsequent visits immediately receive the last saved feed, with an update time.
 
-## Requirements and token
+Background refresh defaults to every five minutes. Manual refresh starts a
+coalesced background job. The frontend checks the local cache every minute
+and every three seconds while a build is in progress; these checks do not each
+fetch Floppy. Focus/reconnect also refetch the local snapshot. Browser query
+caches are in memory. The service worker only caches the app shell, not APIs
+or config.js.
 
-Use a recent Floppy version compatible with the inspected API. In Floppy open
-**Settings → Integrations → App tokens**, create a token with the default tracking
-preset, and copy the secret (shown once). Reads need `watchlist:read`; episode
-watches need `watchlist:write`. Supply it as FLOPPY_TOKEN. No login flow is included.
+A successful episode watch clears metadata memoization and recomputes that
+show from Floppy before returning. Other cards remain available. A background
+build started before the watch cannot overwrite the new watch state. If the
+watch succeeds but schedule refresh fails, the known backlog is decremented
+and a warning is returned in the feed; periodic refresh retries. Failed watch
+requests roll back the frontend optimistic episode state. Network loss after a
+server-side watch can still be ambiguous: refresh before deliberately retrying.
 
-**Runtime tokens are public to anyone who can load this frontend.** The token
-is delivered in `/config.js` and sent by the browser as a Bearer header. It is
-not a server secret, even when set through Docker. This deployment is intended
-for one trusted account; restrict site access to trusted users/devices. Never
-commit `.env.local` or tokens. Rotate an exposed token through Floppy.
+## Up Next behavior and Floppy API
 
-## Development
+Only In progress TV shows enter Home. Default sort is smallest released backlog,
+then earliest future episode date, then latest last-air date. Ended shows remain
+only while a released backlog exists. A caught-up show needs actual future or
+undated unwatched episode metadata, or an explicit next-season hint. Loading
+candidates never appear as posters. Specials are available in detail.
 
-Node 22.12+ and npm:
+The mobile grid has no gutters or rounded corners. Fully watched seasons start
+collapsed; seasons with future or other remaining episodes start open.
+
+See [API inspection and parity limits](docs/API.md). Floppy's REST API does not
+expose all native Home queue projections/custom sorting settings. Its /home/
+endpoint is limited to 50 without pagination, so the grid derives the default
+queue from the complete library instead. Anime remains a separate library.
+
+## Token and access
+
+In Floppy: **Settings → Integrations → App tokens**. Create an app token with
+the default tracking preset; reads require `watchlist:read`, watches require
+`watchlist:write`. Supply the raw secret as FLOPPY_TOKEN, without `Bearer`.
+Do not commit tokens or environment files. The token stays in the container.
+
+This is a **single-account trusted-network app**: anyone who can access Grid can
+read the cached library and mark that account's episodes watched. There is no
+separate Grid login. Put external authentication on your reverse proxy before
+exposing it beyond trusted devices. Cache files contain personal library data;
+keep the volume private. Cross-origin browser writes are rejected.
+
+## Development and production build
+
+Node 22.12+:
 
 ```sh
 npm install
 cp .env.example .env.local
-# Edit FLOPPY_URL and FLOPPY_TOKEN; URL is the base server URL, without /api/v1.
-npm run dev
+# Set FLOPPY_URL and FLOPPY_TOKEN. Set CACHE_DIR=./cache for local use.
 npm run lint
 npm run test
 npm run build
+node --env-file=.env.local server-dist/index.mjs
 ```
 
-Vite reads local environment values and serves `/config.js` in development.
-Restart Vite after changing them. Vite does not proxy API traffic, so development
-also requires CORS. `npm run preview` serves a production build whose placeholder
-config is empty; use Docker to exercise real production runtime configuration.
+`npm run test:smoke` checks the built server against a local mock Floppy,
+including persistence, watch mutations, outages and origin checks. Set SMOKE_PORT
+if its default 9123 is already in use.
 
-## Production and Docker
+`npm run dev` still supports the original direct-browser Vite development mode:
+it reads the local URL/token into config.js and requires Floppy CORS. This is
+for development only. To exercise production behavior use the server command
+above. `npm run dev:server` rebuilds just the server bundle; run the full build
+first so static assets exist. `npm start` uses the existing process environment.
+
+## Docker and Synology
+
+Standard build:
 
 ```sh
-npm run build
 docker build -t floopy-grid .
-docker run -d \
-  --name floopy-grid \
-  --restart unless-stopped \
-  -e PORT=8080 \
-  -e FLOPPY_URL=http://192.168.0.2:8001 \
-  -e FLOPPY_TOKEN=CHANGE_ME \
-  -p 8002:8080 \
-  floopy-grid
 ```
 
-The addresses and ports above are examples only. For token handling you can
-instead use a protected, uncommitted env file with `--env-file`.
+For older Synology Docker without BuildKit use the included compatible file:
+
+```sh
+docker build -f Dockerfile.synology -t floopy-grid .
+```
+
+**Do not run the old sed/chmod Dockerfile modifications.** Nginx and its startup
+script have been replaced by the cache server.
+
+Example `.env.runtime` (replace the URL and token):
+
+```dotenv
+PORT=8080
+FLOPPY_URL=http://192.168.0.2:8001
+FLOPPY_TOKEN=CHANGE_ME
+CACHE_REFRESH_SECONDS=300
+```
+
+FLOPPY_URL must be reachable from the **container**. You may now use the direct
+Floppy address or a Docker DNS name if both containers share a network. The
+previous CORS reverse-proxy URL also works. Do not append `/api/v1`.
+
+For this Synology deployment:
+
+```sh
+cd /volume3/docker/floopy-grid
+chmod 600 .env.runtime
+mkdir -p cache
+chown 1000:1000 cache
+chmod 700 cache
+docker run -d --name floopy-grid --restart unless-stopped --env-file .env.runtime -p 8004:8080 -v /volume3/docker/floopy-grid/cache:/data floopy-grid
+```
+
+The runtime runs as UID/GID 1000. Give only its dedicated cache directory that
+ownership; do not recursively change ownership of your other NAS directories.
+Alternatively use a Docker named volume (`-v floopy-grid-cache:/data`) which is
+initialized with the image's directory ownership.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| PORT | 8080 | Nginx listening port, evaluated at container startup, valid 1–65535 |
-| FLOPPY_URL | required | Browser-reachable HTTP(S) Floppy base URL, optionally with a path prefix |
-| FLOPPY_TOKEN | required | Floppy app token, exposed to the browser |
+| PORT | 8080 | Runtime HTTP listening port, 1–65535 |
+| FLOPPY_URL | required | Container-reachable Floppy base URL |
+| FLOPPY_TOKEN | required | Server-only app token |
+| CACHE_DIR | /data | Persistent cache directory |
+| CACHE_REFRESH_SECONDS | 300 | Background refresh interval, minimum 30 seconds |
+| STATIC_DIR | image dist directory | Optional static asset override for local development |
 
-The multi-stage build uses Node only to compile the frontend. Runtime is Nginx
-Alpine with jq and envsubst. On each startup, jq JSON-encodes environment values
-into `/usr/share/nginx/html/config.js`; envsubst renders the Nginx listening port.
-Neither URL, token nor port is baked into the frontend. Changing them requires
-recreating the container, not rebuilding. `/config.js` is served with no-store
-and excluded from service-worker precache. `/health` returns 200 independently
-of Floppy and is used by Docker HEALTHCHECK.
-
-To exercise a different port without a frontend rebuild:
+Map the host port to PORT. To verify a different container port without a rebuild:
 
 ```sh
-docker run -d --name floopy-port-test \
-  -e PORT=9123 -e FLOPPY_URL=http://example.local -e FLOPPY_TOKEN=test \
-  -p 9123:9123 floopy-grid
+docker run -d --name floopy-port-test -e PORT=9123 -e FLOPPY_URL=http://example.local -e FLOPPY_TOKEN=test -p 9123:9123 floopy-grid
 curl --fail http://localhost:9123/health
-curl --fail http://localhost:9123/
 docker rm -f floopy-port-test
 ```
 
-## Synology and PWA installation
+`/health` is independent of Floppy and cache readiness. Docker HEALTHCHECK uses
+it. Check the feed state at `/api/grid/feed` and startup logs for readiness.
 
-Build the image on the NAS or a compatible architecture, then use Container
-Manager with the variables and port mapping above. A Docker service name like
-`http://floppy:8000` is not reachable from an iPhone: FLOPPY_URL must resolve on
-the device (LAN address, LAN hostname or reverse-proxy hostname). Port mappings
-must target the chosen PORT. Publish the frontend at the root of its hostname.
+## Upgrade from the static frontend
 
-For full PWA installation and service-worker behavior, use **trusted HTTPS**
-for Floopy Grid. Plain HTTP on a LAN IP does not meet secure-context requirements
-(localhost is a special development exception). Use Synology reverse proxy and
-a trusted certificate. An HTTPS frontend must also use an HTTPS Floppy URL;
-browsers block mixed-content API calls. HTTP examples are connectivity examples,
-not a complete secure PWA deployment.
+Download the feature branch archive and extract over the existing checkout;
+`.env.runtime` is not in the archive and remains intact. Build with
+Dockerfile.synology, then replace only the Grid container and add the cache mount.
+Retain this directory on later upgrades; the build/git ignore it. Changing env
+requires recreating the container, not just restarting it.
 
-On iPhone, open in Safari → Share → Add to Home Screen → Open as Web App. On
-Android, use the browser's Install app option. Icons, standalone manifest,
-Apple metadata, safe-area padding and an in-app Back button are included.
-Back returns through internal home history, or Home for direct show links.
-Offline, the shell may open but fresh tracking and writes require Floppy.
+## PWA installation, networking and CORS
 
-## CORS configuration
+Open `http://NAS_IP:8004` for LAN testing. For installable PWA/service-worker
+behavior use trusted HTTPS via your existing reverse proxy. Safari: Share → Add
+to Home Screen → Open as Web App. Android: Install app. Safe-area padding,
+standalone manifest, app icons and in-app Back navigation are included.
 
-Current Floppy source has **no built-in configurable CORS support** (see API
-notes). Since Authorization and JSON requests trigger preflight, a separate
-origin will fail without deployment changes. Configure the reverse proxy that
-already fronts **Floppy**, not a proxy inside Floopy Grid. For example, in its
-Nginx API location, preserve the existing upstream routing and add:
-
-```nginx
-# Replace this exact origin with your Floopy Grid HTTPS origin, including port
-# if nonstandard. Do not reflect arbitrary Origin headers.
-add_header Access-Control-Allow-Origin "https://grid.example.com" always;
-add_header Vary "Origin" always;
-add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
-add_header Access-Control-Allow-Headers "Authorization, Content-Type" always;
-if ($request_method = OPTIONS) { return 204; }
-```
-
-Nginx header inheritance matters: keep the headers in the location handling both
-OPTIONS and actual API responses, including errors; avoid duplicate CORS
-headers from multiple proxies. Browser credentials/cookies are not used. This
-is an infrastructure requirement because Floppy itself has no verified origin
-setting. The app never silently introduces a proxy.
-
-Verify with your deployed origins (no token needed for preflight):
-
-```sh
-curl -i -X OPTIONS 'https://floppy.example.com/api/v1/media/tv/' \
-  -H 'Origin: https://grid.example.com' \
-  -H 'Access-Control-Request-Method: GET' \
-  -H 'Access-Control-Request-Headers: authorization'
-```
-
-Expect 204 and the matching allow-origin, methods and headers. Repeat for POST
-with `authorization,content-type`, then check an authenticated request in the
-browser network inspector. No real Floppy endpoint/token was supplied during
-implementation; authenticated end-to-end and deployment CORS checks must be
-performed against your installation.
+Production API calls now stay on Grid's origin, so **Floppy CORS is no longer
+required**. The browser never contacts FLOPPY_URL. An HTTPS Grid may use an HTTP
+Floppy upstream over a trusted LAN because that connection is server-to-server.
+Configure your public proxy to preserve Host and Origin for same-origin writes.
+The service worker does not cache `/api/` responses. Offline app shell use does
+not make the container or Floppy available offline.
 
 ## Troubleshooting
 
-- **Configuration screen:** set both required variables and recreate container.
-- **401/403:** expired/revoked token or missing scope; recreate with a valid token.
-- **Cannot reach Floppy:** check device DNS, LAN access, TLS, mixed content and CORS.
-- **No active shows:** check the TV library, paused/dropped states, and provider
-  metadata in Floppy. Anime is a separate library, outside this MVP.
-- **Upcoming instead of a date:** Floppy has an upcoming episode/season but no date.
-- **Date differs by a day:** timestamp dates use the device timezone; civil date
-  strings stay local. Floppy may normalize provider dates to timestamps; this
-  frontend cannot reconstruct a provider timezone that the API does not expose.
-- **Save failed:** optimistic state rolls back; check connectivity and refresh.
-  A response lost after a successful server write can be ambiguous; refresh
-  before retrying. A new deliberate tap is a new watch event.
-- **API outage:** errors remain recoverable; existing in-memory data may still show.
-- **No install option:** use trusted HTTPS, check manifest and service-worker
-  registration, and confirm your browser supports installation.
-- **Container unhealthy:** check PORT and `docker logs floopy-grid`; `/health`
-  tests only this frontend, not backend availability.
+- **First feed loading:** initial metadata preparation runs in the container.
+- **Cache could not be saved:** check cache directory ownership (UID 1000), mount
+  path, free disk space and NAS ACLs. The feed can still operate in memory.
+- **Showing last saved feed:** upstream refresh failed. Check Floppy availability;
+  the old cache is intentionally preserved. The update time is the last complete
+  successful refresh, not the last targeted watch update.
+- **Token rejected:** check app-token scopes, expiry or revocation and recreate.
+- **Cannot reach Floppy:** test URL/DNS/network from the Grid container; browser
+  CORS settings are irrelevant in production now.
+- **403 on watches:** ensure your public reverse proxy preserves the original
+  Host and the browser Origin. Direct LAN access on 8004 works without it.
+- **No install option:** use trusted HTTPS and check manifest/service worker.
+- **Missing shows:** check In progress state in Floppy and confirmed upcoming
+  metadata. See API parity limitations; no hypothetical Upcoming cards are added.
+- **Back:** direct show links return Home; internal Home navigation returns back.
 
-## Up Next and poster wall update
-
-Home now includes In progress TV only, matching native Up Next eligibility.
-Ended shows disappear when caught up; shows with actual upcoming episode metadata remain Upcoming.
-Default order: fewest released episodes behind, closest future episode, latest
-last-air date, then unknown. This replaces the original broader active filter.
-Custom Floppy Home row sort overrides are not exposed by the current REST API;
-see the API notes for the exact parity limits.
-
-The mobile grid is a continuous three-column poster wall without gutters or
-rounded tile corners. Completed seasons start collapsed; current/future seasons
-start open. A caught-up season with unreleased episodes remains open.
+No live Floppy credentials were provided during implementation. Physical mobile
+installation and live-account acceptance remain deployment checks.

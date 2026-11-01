@@ -6,3 +6,7 @@ dist
 ! .env.example
 
 *.tsbuildinfo
+
+server-dist/
+
+cache/

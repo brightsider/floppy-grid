@@ -80,3 +80,24 @@ truncate to 50 cards or identify rows using translated/custom display titles.
 Season default expansion uses `total_episodes_left` (includes future episodes),
 falling back to Completed status when totals are unavailable. Zero released
 remaining alone is not completion. Manual toggles remain under user control.
+
+## Container feed cache (current production architecture)
+
+The user approved replacing the static-only architecture with a small Node
+server. Floppy endpoints and types above remain unchanged. Production requests
+are now authenticated by the container, not the browser. Only show detail,
+season detail and episode watch routes are forwarded; this is not an arbitrary
+URL proxy. The browser config exposes no Floppy token or upstream URL.
+
+New **Floopy Grid local** endpoint: `GET /api/grid/feed` returns
+`{ready, entries:[{row,next,lastAirDate}], updatedAt, refreshing, error}`.
+`?refresh=1` starts/coalesces a background refresh and returns immediately.
+The endpoint is not a Floppy API route. Only verified queue entries enter the
+snapshot. Metadata is memoized for a minute; full snapshots refresh every five
+minutes by default. Writes revalidate their affected show and persist the change.
+
+Atomic JSON snapshots in /data bind to a SHA-256 identity of URL and token. Raw
+credentials are never saved there. Failed refreshes preserve the prior snapshot;
+files from another server/token are ignored. Changing a token causes a cold build.
+CORS findings earlier in this document apply only to direct-browser dev mode.
+Production no longer needs Floppy CORS or a browser-reachable upstream address.
