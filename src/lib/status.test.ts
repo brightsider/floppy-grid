@@ -27,9 +27,11 @@ describe('upcoming metadata',()=>{
   it('finds earliest future unwatched episode',()=>expect(findUpcoming([episode('2026-10-17'),episode('2026-10-13'),episode('2026-10-11',true),episode('2026-10-01')],now)).toEqual({date:'2026-10-13'}));
   it('keeps episodes with unknown dates',()=>expect(findUpcoming([episode(null)],now)).toEqual({date:null}));
   it('omits fully finished metadata',()=>expect(findUpcoming([episode('2026-10-01',true)],now)).toBeNull());
-  it('excludes dropped and paused shows but permits returning completed shows',()=>{
+  it('matches the In progress only Up Next filter',()=>{
     expect(active({status:4} as TrackedMedia)).toBe(false);
     expect(active({status:2} as TrackedMedia)).toBe(false);
-    expect(active({status:3} as TrackedMedia)).toBe(true);
+    expect(active({status:3} as TrackedMedia)).toBe(false);
+    expect(active({status:0} as TrackedMedia)).toBe(false);
+    expect(active({status:1} as TrackedMedia)).toBe(true);
   });
 });

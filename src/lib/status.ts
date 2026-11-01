@@ -28,7 +28,7 @@ export function findUpcoming(episodes:TrackedMedia[], now=new Date()):Upcoming|n
   if (future[0]) return {date:future[0]};
   return unwatched.some(e=>!e.item?.release_datetime) ? {date:null} : null;
 }
-export function active(row:TrackedMedia) { return row.status !== 4 && row.status !== 2; }
+export function active(row:TrackedMedia) { return row.status === 1; }
 export function dateLabel(value:string|null) {
   if (!value) return 'Date to be announced';
   const date = parseDate(value);

@@ -39,9 +39,8 @@ retries are disabled. Floppy defaults `end_date` to now.
   Known undated episodes produce Upcoming; an explicit next-season hint also
   preserves Upcoming when dates are unavailable. No invented renewal inference.
 - Status codes: Planning=0, In progress=1, Paused=2, Completed=3, Dropped=4.
-  Dropped/paused shows and seasons are excluded from upcoming discovery.
-  Completed rows can return if new episodes exist. Planning rows with released
-  episodes are included. Specials (season zero) remain available in detail but
+  Only In progress shows enter Up Next. Dropped seasons are excluded from
+  upcoming discovery; paused/planned seasons follow the available metadata. Specials (season zero) remain available in detail but
   do not determine the upcoming home schedule, matching backend next-episode
   treatment. Anime is a separate library and is outside this TV-only MVP.
 - A related episode's `tracked` field means a watch play exists. Episode title,
@@ -61,3 +60,23 @@ Separate-origin browser requests therefore need CORS headers and OPTIONS
 handling on the deployment's Floppy-facing reverse proxy. See README.
 No live Floppy account was supplied, so authenticated live verification remains
 a deployment check. Inspection of the current source is not a live CORS test.
+
+## Up Next alignment update
+
+Home now follows the native Up Next filter (`status=1`, In progress only),
+with ended/cancelled/other terminal shows retained only while released episodes
+remain. Continuing shows with no known date stay as Upcoming. Default ascending
+queue order mirrors `_episode_feed_sort_values`: smallest released backlog,
+soonest future date, most recent last air date, then unknown. Title breaks ties.
+Planning and Completed tracker rows do not enter this queue.
+
+REST `/home/` does not expose row type, queue projection, or row sort settings,
+and clamps `limit` to 50 without pagination. We therefore derive the default
+queue from the fully paginated TV library and show/season metadata. Custom
+Floppy row sorts/directions and calendar-only episode data unavailable in those
+responses cannot be reproduced exactly by this REST consumer. We do not silently
+truncate to 50 cards or identify rows using translated/custom display titles.
+
+Season default expansion uses `total_episodes_left` (includes future episodes),
+falling back to Completed status when totals are unavailable. Zero released
+remaining alone is not completion. Manual toggles remain under user control.

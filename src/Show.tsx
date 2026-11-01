@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { watchEpisode } from './api/client';
 import { queryClient, seasonOptions, showOptions } from './api/queries';
 import type { CompleteMedia, TrackedMedia } from './api/types';
+import { seasonInitiallyOpen } from './lib/upNext';
 import { dateLabel, released } from './lib/status';
 import { ErrorState, Poster } from './components/Shared';
 
@@ -46,10 +47,11 @@ function EpisodeRow({episode,source,id,season}:{episode:TrackedMedia;source:stri
     <button className="watch-button" disabled={!canWatch || saving} aria-label={episode.tracked ? `Watched: ${item?.title || 'episode'}` : canWatch ? `Mark ${item?.title || 'episode'} watched` : 'Episode not yet released'} onClick={()=>mutation.mutate()}>{mutation.isPending ? <span className="saving">···</span> : episode.tracked ? '✓' : canWatch ? '○' : <span className="future-dot">·</span>}</button>
   </li>;
 }
-function Season({source,id,season}:{source:string;id:string;season:number}) {
-  const [open,setOpen]=useState(true);
+function Season({source,id,season,summary}:{source:string;id:string;season:number;summary:TrackedMedia}) {
+  const [expanded,setExpanded]=useState<boolean|null>(null);
+  const open=expanded ?? seasonInitiallyOpen(summary);
   const query=useQuery({...seasonOptions(source,id,season),enabled:open});
-  return <section className="season"><button className="season-heading" onClick={()=>setOpen(!open)} aria-expanded={open}>Season {season===0 ? '0 · Specials' : season}<span aria-hidden="true">{open ? '−' : '+'}</span></button>{open && <>
+  return <section className="season"><button className="season-heading" onClick={()=>setExpanded(!open)} aria-expanded={open}>Season {season===0 ? '0 · Specials' : season}<span aria-hidden="true">{open ? '−' : '+'}</span></button>{open && <>
     {query.isPending && <p className="season-loading" role="status">Loading episodes…</p>}
     {query.isError && <ErrorState error={query.error} retry={()=>void query.refetch()}/>}
     {query.data && <ul className="episodes">{query.data.related.episodes?.map((e,i)=><EpisodeRow key={e.item?.episode_number ?? i} episode={e} source={source} id={id} season={season}/>)}</ul>}
@@ -67,7 +69,7 @@ export function Show() {
     {query.isPending && <div className="detail-skeleton" role="status">Loading show…</div>}
     {query.isError && <ErrorState error={query.error} retry={()=>void query.refetch()}/>}
     {query.data && <><div className="show-intro"><Poster image={query.data.image} title={query.data.title || 'TV show'}/><div><p className="eyebrow">YOUR EPISODES</p><h1>{query.data.title || 'Untitled show'}</h1><p className="show-hint">One tap to mark watched.</p></div></div>
-    {(query.data.related.seasons || []).filter(s=>s.item?.season_number!=null).sort((a,b)=>a.item!.season_number!-b.item!.season_number!).map(s=><Season key={s.item!.season_number} source={source} id={id} season={s.item!.season_number!}/>)}
+    {(query.data.related.seasons || []).filter(s=>s.item?.season_number!=null).sort((a,b)=>a.item!.season_number!-b.item!.season_number!).map(s=><Season key={s.item!.season_number} source={source} id={id} season={s.item!.season_number!} summary={s}/>)}
     {!query.data.related.seasons?.length && <div className="notice"><h2>No seasons yet</h2><p>Floppy has no season metadata for this show.</p></div>}
     </>}
   </main>;

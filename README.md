@@ -17,8 +17,8 @@ there is no backend, database access, or API proxy. The browser talks to Floppy.
 See [the API inspection](docs/API.md) for exact routes, source revision, typed
 response assumptions, scopes, and differences from the requested model.
 
-Home excludes dropped/paused shows, includes released episodes behind or known
-upcoming episodes, and omits finished shows without either. Counts come from
+Home includes In progress TV shows, keeps continuing shows with unknown dates,
+and omits ended shows once their released backlog is finished. Counts come from
 Floppy's `episodes_left`; its `next_episode` is released-only, so upcoming
 schedules require season metadata. Details show all seasons, including specials.
 Season metadata work for home is bounded to three concurrent requests and
@@ -185,3 +185,16 @@ performed against your installation.
   registration, and confirm your browser supports installation.
 - **Container unhealthy:** check PORT and `docker logs floopy-grid`; `/health`
   tests only this frontend, not backend availability.
+
+## Up Next and poster wall update
+
+Home now includes In progress TV only, matching native Up Next eligibility.
+Ended shows disappear when caught up; continuing undated shows remain Upcoming.
+Default order: fewest released episodes behind, closest future episode, latest
+last-air date, then unknown. This replaces the original broader active filter.
+Custom Floppy Home row sort overrides are not exposed by the current REST API;
+see the API notes for the exact parity limits.
+
+The mobile grid is a continuous three-column poster wall without gutters or
+rounded tile corners. Completed seasons start collapsed; current/future seasons
+start open. A caught-up season with unreleased episodes remains open.

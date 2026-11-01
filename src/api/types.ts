@@ -5,6 +5,7 @@ export interface Item {
   media_id: string; source: string; title: string; image: string | null;
   season_number: number | null; episode_number: number | null;
   release_datetime: string | null;
+  status?: string | null;
 }
 export interface TrackedMedia {
   item: Item | null; item_id: string | null; status: number | null;
@@ -18,7 +19,7 @@ export interface Page<T> {
 }
 export interface CompleteMedia {
   title:string|null; image:string|null; synopsis:string|null;
-  details:{next_episode_season?:number|null;status?:string};
+  details:{next_episode_season?:number|null;status?:string;last_air_date?:string|null};
   related:{seasons?:TrackedMedia[];episodes?:TrackedMedia[]};
 }
 export interface Upcoming { date:string|null }
