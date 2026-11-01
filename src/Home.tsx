@@ -22,7 +22,7 @@ export function Home() {
     },
   }))});
   const cards=rows.map((row,i)=>({row,status:posterStatus(row.episodes_left,upcoming[i].data?.next || null),query:upcoming[i]}));
-  const visible=cards.filter(c=>c.status || c.query.isPending || c.query.isError).sort((a,b)=>compareUpNext(
+  const visible=cards.filter(c=>c.status !== null).sort((a,b)=>compareUpNext(
     {row:a.row,next:a.query.data?.next || null,lastAirDate:a.query.data?.lastAirDate || null},
     {row:b.row,next:b.query.data?.next || null,lastAirDate:b.query.data?.lastAirDate || null},
   ));
@@ -34,13 +34,14 @@ export function Home() {
     {library.isError && <ErrorState error={library.error} retry={refresh}/>}
     {library.isPending ? <LoadingGrid/> : <>
       {upcoming.some(q=>q.isError) && <p className="inline-error" role="alert">Some upcoming episodes couldn’t load. <button onClick={refresh}>Retry</button></p>}
-      <div className="grid">{visible.map(({row,status,query})=>{
+      <div className="grid">{visible.map(({row,status})=>{
         const item=row.item!;
-        return <Link className="poster-card" key={`${item.source}/${item.media_id}`} to={`/show/${encodeURIComponent(item.source)}/${encodeURIComponent(item.media_id)}`} state={{fromHome:true}} aria-label={`${item.title}, ${status || (query.isError ? 'schedule unavailable' : 'checking schedule')}`}>
-          <Poster image={item.image} title={item.title}/><span className={`badge ${row.episodes_left && row.episodes_left>0 ? 'behind' : ''}`}>{status || (query.isError ? 'Check schedule' : '···')}</span>
+        return <Link className="poster-card" key={`${item.source}/${item.media_id}`} to={`/show/${encodeURIComponent(item.source)}/${encodeURIComponent(item.media_id)}`} state={{fromHome:true}} aria-label={`${item.title}, ${status}`}>
+          <Poster image={item.image} title={item.title}/><span className={`badge ${row.episodes_left && row.episodes_left>0 ? 'behind' : ''}`}>{status}</span>
         </Link>;
       })}</div>
-      {!visible.length && !library.isError && <div className="notice empty"><span aria-hidden="true">✓</span><h2>You’re all caught up</h2><p>No active shows with episodes to watch or a known upcoming episode. Manage your TV library in Floppy.</p><button onClick={refresh}>Refresh library</button></div>}
+      {loading && <p className="footer-note" role="status">Checking upcoming episodes…</p>}
+      {!visible.length && !loading && !library.isError && !upcoming.some(q=>q.isError) && <div className="notice empty"><span aria-hidden="true">✓</span><h2>You’re all caught up</h2><p>No active shows with episodes to watch or a known upcoming episode. Manage your TV library in Floppy.</p><button onClick={refresh}>Refresh library</button></div>}
       {!!visible.length && <p className="footer-note">Your next episode, at a glance.</p>}
     </>}
   </main>;
