@@ -1,8 +1,8 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { libraryOptions, metadataTask, queryClient, seasonOptions, showOptions } from './api/queries';
-import { active, findUpcoming, posterStatus } from './lib/status';
-import { compareUpNext, isTerminal } from './lib/upNext';
+import { active, posterStatus } from './lib/status';
+import { compareUpNext, isTerminal, upcomingForQueue } from './lib/upNext';
 import { ErrorState, LoadingGrid, Poster } from './components/Shared';
 
 export function Home() {
@@ -14,10 +14,10 @@ export function Home() {
     queryFn:async()=>{
       const {source,media_id:id}=row.item!;
       const detail=await metadataTask(()=>queryClient.fetchQuery(showOptions(source,id)));
-      if (isTerminal(detail.details.status)) return {next:null,lastAirDate:detail.details.last_air_date || null,terminal:true};
+      if (isTerminal(detail.details.status || row.item?.status)) return {next:null,lastAirDate:detail.details.last_air_date || null,terminal:true};
       const seasons=(detail.related.seasons || []).filter(s=>s.item?.season_number && s.status!==4);
       const data=await Promise.all(seasons.map(s=>metadataTask(()=>queryClient.fetchQuery(seasonOptions(source,id,s.item!.season_number!)))));
-      const next=findUpcoming(data.flatMap(s=>s.related.episodes || [])) || {date:null};
+      const next=upcomingForQueue(row,detail,data.flatMap(s=>s.related.episodes || []));
       return {next,lastAirDate:detail.details.last_air_date || null,terminal:false};
     },
   }))});

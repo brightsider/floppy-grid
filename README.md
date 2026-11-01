@@ -17,7 +17,7 @@ there is no backend, database access, or API proxy. The browser talks to Floppy.
 See [the API inspection](docs/API.md) for exact routes, source revision, typed
 response assumptions, scopes, and differences from the requested model.
 
-Home includes In progress TV shows, keeps continuing shows with unknown dates,
+Home includes In progress TV shows, keeps shows with real upcoming episodes (including undated ones),
 and omits ended shows once their released backlog is finished. Counts come from
 Floppy's `episodes_left`; its `next_episode` is released-only, so upcoming
 schedules require season metadata. Details show all seasons, including specials.
@@ -189,7 +189,7 @@ performed against your installation.
 ## Up Next and poster wall update
 
 Home now includes In progress TV only, matching native Up Next eligibility.
-Ended shows disappear when caught up; continuing undated shows remain Upcoming.
+Ended shows disappear when caught up; shows with actual upcoming episode metadata remain Upcoming.
 Default order: fewest released episodes behind, closest future episode, latest
 last-air date, then unknown. This replaces the original broader active filter.
 Custom Floppy Home row sort overrides are not exposed by the current REST API;

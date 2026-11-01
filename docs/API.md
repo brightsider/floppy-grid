@@ -65,7 +65,7 @@ a deployment check. Inspection of the current source is not a live CORS test.
 
 Home now follows the native Up Next filter (`status=1`, In progress only),
 with ended/cancelled/other terminal shows retained only while released episodes
-remain. Continuing shows with no known date stay as Upcoming. Default ascending
+remain. Upcoming requires an actual undated unwatched episode or explicit next-season hint. Default ascending
 queue order mirrors `_episode_feed_sort_values`: smallest released backlog,
 soonest future date, most recent last air date, then unknown. Title breaks ties.
 Planning and Completed tracker rows do not enter this queue.

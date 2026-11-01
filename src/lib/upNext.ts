@@ -1,5 +1,5 @@
-import type { TrackedMedia, Upcoming } from '../api/types';
-import { parseDate } from './status';
+import type { CompleteMedia, TrackedMedia, Upcoming } from '../api/types';
+import { findUpcoming, parseDate } from './status';
 // Floppy users/home_screen.py: _episode_feed_sort_values and row filter.
 const terminal=new Set(['ended','canceled','cancelled','finished','finished airing','completed','complete','concluded','discontinued']);
 export function isTerminal(status?:string|null) {
@@ -27,4 +27,12 @@ export function seasonInitiallyOpen(season:TrackedMedia) {
   // may still exist. Only completed status / known total remaining can do so.
   if (season.total_episodes_left != null) return season.total_episodes_left>0;
   return season.status!==3;
+}
+
+// Absence of schedule metadata is not evidence of an upcoming episode.
+export function upcomingForQueue(row:TrackedMedia, detail:CompleteMedia, episodes:TrackedMedia[]):Upcoming|null {
+  if (isTerminal(detail.details.status || row.item?.status)) return null;
+  const next=findUpcoming(episodes);
+  if (next) return next;
+  return detail.details.next_episode_season != null ? {date:null} : null;
 }
