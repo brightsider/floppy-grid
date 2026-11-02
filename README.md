@@ -207,3 +207,8 @@ not make the container or Floppy available offline.
 
 No live Floppy credentials were provided during implementation. Physical mobile
 installation and live-account acceptance remain deployment checks.
+
+Episode checkmarks use the season's current-pass progress and next-episode target
+rather than lifetime episode history alone. During a 7/8 rewatch, the eighth
+episode is available to mark watched again. See API notes for the limitation
+when a pass contains multiple nonsequential gaps.

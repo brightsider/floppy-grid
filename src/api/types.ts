@@ -12,6 +12,9 @@ export interface TrackedMedia {
   tracked: boolean; episodes_left: number | null; total_episodes_left: number | null;
   next_episode: {season_number:number|null;episode_number:number;air_date:string|null} | null;
   end_date: string | null;
+  progress?: number | null;
+  /** Client-only optimistic state, never sent to Floppy or stored in its history. */
+  optimisticWatched?: boolean;
 }
 export interface Page<T> {
   results:T[];

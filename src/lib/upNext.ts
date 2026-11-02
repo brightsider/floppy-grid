@@ -23,6 +23,7 @@ export function compareUpNext(a:QueueCard,b:QueueCard) {
   return ar[0]-br[0] || ar[1]-br[1] || (a.row.item?.title || '').localeCompare(b.row.item?.title || '') || (a.row.item_id || '').localeCompare(b.row.item_id || '');
 }
 export function seasonInitiallyOpen(season:TrackedMedia) {
+  if ((season.episodes_left || 0)>0 || season.next_episode) return true;
   // Released episodes left alone cannot establish completion: future episodes
   // may still exist. Only completed status / known total remaining can do so.
   if (season.total_episodes_left != null) return season.total_episodes_left>0;

@@ -101,3 +101,21 @@ credentials are never saved there. Failed refreshes preserve the prior snapshot;
 files from another server/token are ignored. Changing a token causes a cold build.
 CORS findings earlier in this document apply only to direct-browser dev mode.
 Production no longer needs Floppy CORS or a browser-reachable upstream address.
+
+## Episode state during rewatch
+
+Verified against Floppy `2bdccb83b1e92e260f723f3fa5ced6918b08a4a5`:
+EpisodeSerializer's `tracked` means a historical episode play exists, while the
+related season's `progress` and `next_episode` follow the current explicit pass.
+Grid therefore does not show a historical checkmark for an episode beyond the
+season's current progress, or for its explicit next-episode target. Those released
+episodes can be watched again using the existing watch POST (a new play, not a
+history edit). The optimistic checkmark is client-only and rolls back on failure.
+Seasons with a released backlog or explicit next target stay open by default.
+
+For the reported 7/8 rewatch, E06 and E07 remain checked and E08 is actionable.
+The API does not expose `rewatch_started_at` or the complete set of completed
+coordinates in the current pass. Progress is the furthest reached coordinate;
+`next_episode` identifies the next released gap. Multiple nonsequential gaps
+below progress cannot all be reconstructed from these responses; Grid does not
+invent pass timestamps from lifetime history or the user's local timezone.
