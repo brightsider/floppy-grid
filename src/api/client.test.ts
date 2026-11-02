@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getLibrary, watchEpisode } from './client';
 beforeEach(()=>{
-  vi.stubGlobal('window',{__FLOOPY_CONFIG__:{FLOPPY_URL:'https://floppy.example/prefix',FLOPPY_TOKEN:'test-only'}});
+  vi.stubGlobal('window',{__FLOPPY_GRID_CONFIG__:{FLOPPY_URL:'https://floppy.example/prefix',FLOPPY_TOKEN:'test-only'}});
 });
 afterEach(()=>vi.unstubAllGlobals());
 describe('verified API request contract',()=>{

@@ -89,7 +89,7 @@ are now authenticated by the container, not the browser. Only show detail,
 season detail and episode watch routes are forwarded; this is not an arbitrary
 URL proxy. The browser config exposes no Floppy token or upstream URL.
 
-New **Floopy Grid local** endpoint: `GET /api/grid/feed` returns
+New **Floppy Grid local** endpoint: `GET /api/grid/feed` returns
 `{ready, entries:[{row,next,lastAirDate}], updatedAt, refreshing, error}`.
 `?refresh=1` starts/coalesces a background refresh and returns immediately.
 The endpoint is not a Floppy API route. Only verified queue entries enter the

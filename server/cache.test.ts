@@ -5,7 +5,7 @@ import { beforeEach,afterEach,describe,it,expect,vi } from 'vitest';
 import { FeedCache,Floppy,showPath } from './cache';
 import type { TrackedMedia,CompleteMedia } from '../src/api/types';
 let directory:string;
-beforeEach(async()=>{directory=await mkdtemp(join(tmpdir(),'floopy-cache-'));});
+beforeEach(async()=>{directory=await mkdtemp(join(tmpdir(),'floppy-cache-'));});
 afterEach(async()=>{await rm(directory,{recursive:true,force:true});});
 const row=(behind=1):TrackedMedia=>({status:1,episodes_left:behind,total_episodes_left:behind,tracked:true,item_id:'tmdb_tv_1',next_episode:null,end_date:null,item:{source:'tmdb',media_id:'1',title:'Test show',image:null,season_number:null,episode_number:null,release_datetime:null}});
 const show:CompleteMedia={title:'Test show',image:null,synopsis:null,details:{status:'Returning Series'},related:{seasons:[{...row(),item:{...row().item!,season_number:1}}]}};

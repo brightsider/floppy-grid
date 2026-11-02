@@ -1,4 +1,6 @@
-# Floopy Grid
+# Floppy Grid
+
+[Source repository](https://github.com/brightsider/floppy-grid)
 
 A compact, dark TV tracking PWA for [Floppy](https://github.com/dannyvfilms/Floppy).
 Three posters across on iPhone, released episode counts, upcoming dates, seasons
@@ -18,7 +20,7 @@ Floppy remains the source of truth. No React SSR is used: Vite's server build
 only bundles the HTTP/cache service.
 
 This replaces the initial static Nginx/direct-browser architecture, following
-approval to add a server cache. Production browsers talk to Floopy Grid on the
+approval to add a server cache. Production browsers talk to Floppy Grid on the
 same origin. FLOPPY_TOKEN and FLOPPY_URL are **not exposed in config.js**. Runtime
 config.js contains only `SERVER_CACHE: true`. No rebuild is needed to change
 server URL, token, port, cache directory or refresh interval.
@@ -104,13 +106,13 @@ first so static assets exist. `npm start` uses the existing process environment.
 Standard build:
 
 ```sh
-docker build --pull -t floopy-grid .
+docker build --pull -t floppy-grid .
 ```
 
 For older Synology Docker without BuildKit use the included compatible file:
 
 ```sh
-docker build --pull -f Dockerfile.synology -t floopy-grid .
+docker build --pull -f Dockerfile.synology -t floppy-grid .
 ```
 
 **Do not run the old sed/chmod Dockerfile modifications.** Nginx and its startup
@@ -132,17 +134,17 @@ previous CORS reverse-proxy URL also works. Do not append `/api/v1`.
 For this Synology deployment:
 
 ```sh
-cd /volume3/docker/floopy-grid
+cd /volume3/docker/floppy-grid
 chmod 600 .env.runtime
 mkdir -p cache
 chown 1000:1000 cache
 chmod 700 cache
-docker run -d --name floopy-grid --restart unless-stopped --env-file .env.runtime -p 8004:8080 -v /volume3/docker/floopy-grid/cache:/data floopy-grid
+docker run -d --name floppy-grid --restart unless-stopped --env-file .env.runtime -p 8004:8080 -v /volume3/docker/floppy-grid/cache:/data floppy-grid
 ```
 
 The runtime runs as UID/GID 1000. Give only its dedicated cache directory that
 ownership; do not recursively change ownership of your other NAS directories.
-Alternatively use a Docker named volume (`-v floopy-grid-cache:/data`) which is
+Alternatively use a Docker named volume (`-v floppy-grid-cache:/data`) which is
 initialized with the image's directory ownership.
 
 | Variable | Default | Meaning |
@@ -157,9 +159,9 @@ initialized with the image's directory ownership.
 Map the host port to PORT. To verify a different container port without a rebuild:
 
 ```sh
-docker run -d --name floopy-port-test -e PORT=9123 -e FLOPPY_URL=http://example.local -e FLOPPY_TOKEN=test -p 9123:9123 floopy-grid
+docker run -d --name floppy-port-test -e PORT=9123 -e FLOPPY_URL=http://example.local -e FLOPPY_TOKEN=test -p 9123:9123 floppy-grid
 curl --fail http://localhost:9123/health
-docker rm -f floopy-port-test
+docker rm -f floppy-port-test
 ```
 
 `/health` is independent of Floppy and cache readiness. Docker HEALTHCHECK uses
@@ -216,3 +218,5 @@ when a pass contains multiple nonsequential gaps.
 Node 24 and npm dependency versions are documented in [dependency update notes](docs/DEPENDENCIES.md), including the TypeScript compatibility constraint.
 
 Opening a show scrolls once to the first unwatched episode in the expanded seasons, including the current rewatch pass and upcoming episodes. When all are watched it scrolls to the end. The move waits for episode loading, is cancelled by user interaction, and does not repeat after watch mutations or background refetches. Back remains available in the sticky show header.
+
+For an existing installation using the former spelling, follow the [rename migration](docs/RENAME.md) to move the env file and cache together.

@@ -38,7 +38,7 @@ const server=createServer(async(req,res)=>{
   try {
     const url=new URL(req.url || '/', 'http://localhost');
     if(req.method==='GET' && url.pathname==='/health') {res.writeHead(200,{'Content-Type':'text/plain'});res.end('ok\n');return;}
-    if(req.method==='GET' && url.pathname==='/config.js') {res.writeHead(200,{'Content-Type':'application/javascript','Cache-Control':'no-store'});res.end('window.__FLOOPY_CONFIG__ = {SERVER_CACHE:true};\n');return;}
+    if(req.method==='GET' && url.pathname==='/config.js') {res.writeHead(200,{'Content-Type':'application/javascript','Cache-Control':'no-store'});res.end('window.__FLOPPY_GRID_CONFIG__ = window.__FLOOPY_CONFIG__ = {SERVER_CACHE:true};\n');return;}
     if(req.method==='GET' && url.pathname==='/api/grid/feed') {
       const state=cache.state();
       if(url.searchParams.get('refresh')==='1' || !state.ready) void cache.refresh();
@@ -77,6 +77,6 @@ const server=createServer(async(req,res)=>{
     else res.end();
   }
 });
-server.listen(port,'0.0.0.0',()=>{console.log(`Floopy Grid listening on ${port}; persistent feed cache enabled.`);void cache.refresh();});
+server.listen(port,'0.0.0.0',()=>{console.log(`Floppy Grid listening on ${port}; persistent feed cache enabled.`);void cache.refresh();});
 const timer=setInterval(()=>void cache.refresh(),interval*1000);
 for(const signal of ['SIGTERM','SIGINT'] as const) process.on(signal,()=>{clearInterval(timer);server.close(()=>process.exit(0));});

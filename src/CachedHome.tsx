@@ -14,7 +14,7 @@ export function CachedHome() {
   };
   const busy=feed.isFetching || data?.refreshing;
   return <main className="home">
-    <header className="app-header"><Link to="/" className="brand" aria-label="Floopy Grid home"><span className="brand-mark" aria-hidden="true">▦</span>floopy<span className="brand-light">grid</span></Link><button className={`icon-button ${busy?'refreshing':''}`} aria-label="Refresh shows" onClick={()=>void refresh()} disabled={busy}>↻</button></header>
+    <header className="app-header"><Link to="/" className="brand" aria-label="Floppy Grid home"><span className="brand-mark" aria-hidden="true">▦</span>floppy<span className="brand-light">grid</span></Link><button className={`icon-button ${busy?'refreshing':''}`} aria-label="Refresh shows" onClick={()=>void refresh()} disabled={busy}>↻</button></header>
     <div className="section-heading"><h1>Up next</h1><span>{data?.ready?`${entries.length} shows`:'Preparing your feed'}</span></div>
     {feed.isError && <ErrorState error={feed.error} retry={()=>void feed.refetch()}/>}
     {data?.error && <p className="inline-error" role="alert">{data.error} {data.ready?'Showing the last saved feed.':''} <button onClick={()=>void refresh()}>Retry</button></p>}

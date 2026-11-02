@@ -1,8 +1,13 @@
 declare global {
-  interface Window { __FLOOPY_CONFIG__?: { FLOPPY_URL?: string; FLOPPY_TOKEN?: string; SERVER_CACHE?: boolean } }
+  interface GridRuntimeConfig { FLOPPY_URL?: string; FLOPPY_TOKEN?: string; SERVER_CACHE?: boolean }
+  interface Window {
+    __FLOPPY_GRID_CONFIG__?: GridRuntimeConfig;
+    /** Compatibility with the previously installed PWA shell. */
+    __FLOOPY_CONFIG__?: GridRuntimeConfig;
+  }
 }
 export function getConfig() {
-  const config = window.__FLOOPY_CONFIG__;
+  const config = window.__FLOPPY_GRID_CONFIG__ ?? window.__FLOOPY_CONFIG__;
   if (config?.SERVER_CACHE) return {url:'',token:''};
   if (!config?.FLOPPY_URL || !config.FLOPPY_TOKEN) throw new Error('Configure FLOPPY_URL and FLOPPY_TOKEN, then restart the container. For development, set them in .env.local and restart Vite.');
   const url = new URL(config.FLOPPY_URL);
@@ -10,5 +15,5 @@ export function getConfig() {
   return {url:url.href.replace(/\/$/, ''),token:config.FLOPPY_TOKEN};
 }
 export function serverCacheEnabled() {
-  return typeof window!=='undefined' && window.__FLOOPY_CONFIG__?.SERVER_CACHE===true;
+  return typeof window!=='undefined' && (window.__FLOPPY_GRID_CONFIG__ ?? window.__FLOOPY_CONFIG__)?.SERVER_CACHE===true;
 }

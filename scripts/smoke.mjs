@@ -5,7 +5,7 @@ import { mkdtemp,rm,readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import assert from 'node:assert/strict';
-const dir=await mkdtemp(join(tmpdir(),'floopy-smoke-'));
+const dir=await mkdtemp(join(tmpdir(),'floppy-smoke-'));
 let behind=2,outage=false,writes=0;
 const row=()=>({status:1,episodes_left:behind,total_episodes_left:behind,item_id:'tv_1',tracked:true,item:{source:'tmdb',media_id:'1',title:'Fixture TV',image:null,season_number:null,episode_number:null,release_datetime:null},next_episode:null,end_date:null});
 const upstream=createServer(async(req,res)=>{
@@ -39,8 +39,11 @@ try {
   let feed=await wait(async()=>{const f=await(await fetch(`${url}/api/grid/feed`)).json();return f.ready&&f;});
   assert.equal(feed.entries[0].row.episodes_left,2);
   const config=await(await fetch(`${url}/config.js`)).text();
-  assert.ok(config.includes('SERVER_CACHE:true'));assert.ok(!config.includes('smoke-secret'));assert.ok(!config.includes(upstreamUrl));
-  assert.equal((await fetch(`${url}/show/tmdb/1`)).status,200);
+  assert.ok(config.includes('SERVER_CACHE:true'));assert.ok(config.includes('__FLOPPY_GRID_CONFIG__'));assert.ok(config.includes('__FLOOPY_CONFIG__'));assert.ok(!config.includes('smoke-secret'));assert.ok(!config.includes(upstreamUrl));
+  const page=await fetch(`${url}/show/tmdb/1`);assert.equal(page.status,200);
+  assert.ok((await page.text()).includes('<title>Floppy Grid</title>'));
+  const manifest=await(await fetch(`${url}/manifest.webmanifest`)).json();
+  assert.equal(manifest.name,'Floppy Grid');assert.equal(manifest.short_name,'Floppy Grid');
   assert.equal((await fetch(`${url}/api/v1/arbitrary-route/`)).status,404);
   const watch=()=>fetch(`${url}/api/v1/media/tv/tmdb/1/1/episodes/1/watch/`,{method:'POST',headers:{'Content-Type':'application/json',Origin:url},body:JSON.stringify({external_id:`smoke-${writes}`})});
   const cross=await fetch(`${url}/api/v1/media/tv/tmdb/1/1/episodes/1/watch/`,{method:'POST',headers:{'Content-Type':'application/json',Origin:'http://other.example'},body:'{"external_id":"blocked"}'});

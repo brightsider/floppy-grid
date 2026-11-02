@@ -31,7 +31,7 @@ function DirectHome() {
   const loading=upcoming.some(q=>q.isFetching);
   const refresh=()=>{void queryClient.invalidateQueries();};
   return <main className="home">
-    <header className="app-header"><Link to="/" className="brand" aria-label="Floopy Grid home"><span className="brand-mark" aria-hidden="true">▦</span>floopy<span className="brand-light">grid</span></Link><button className={`icon-button ${library.isFetching || loading ? 'refreshing' : ''}`} aria-label="Refresh shows" onClick={refresh} disabled={library.isFetching || loading}>↻</button></header>
+    <header className="app-header"><Link to="/" className="brand" aria-label="Floppy Grid home"><span className="brand-mark" aria-hidden="true">▦</span>floppy<span className="brand-light">grid</span></Link><button className={`icon-button ${library.isFetching || loading ? 'refreshing' : ''}`} aria-label="Refresh shows" onClick={refresh} disabled={library.isFetching || loading}>↻</button></header>
     <div className="section-heading"><h1>Up next</h1><span>{library.data ? `${visible.length} shows` : 'Your TV, in one place'}</span></div>
     {library.isError && <ErrorState error={library.error} retry={refresh}/>}
     {library.isPending ? <LoadingGrid/> : <>

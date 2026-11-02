@@ -10,13 +10,13 @@ export default defineConfig(({mode}) => {
         server.middlewares.use('/config.js', (_req, res) => {
           res.setHeader('Content-Type', 'application/javascript');
           res.setHeader('Cache-Control', 'no-store');
-          res.end(`window.__FLOOPY_CONFIG__ = ${JSON.stringify({FLOPPY_URL:env.FLOPPY_URL || '', FLOPPY_TOKEN:env.FLOPPY_TOKEN || ''})};`);
+          res.end(`window.__FLOPPY_GRID_CONFIG__ = ${JSON.stringify({FLOPPY_URL:env.FLOPPY_URL || '', FLOPPY_TOKEN:env.FLOPPY_TOKEN || ''})};`);
         });
       },
     }, VitePWA({
       registerType:'autoUpdate',
       includeAssets:['apple-touch-icon.png'],
-      manifest:{name:'Floopy Grid',short_name:'Floopy',description:'Your next episode, at a glance.',display:'standalone',start_url:'/',scope:'/',theme_color:'#101114',background_color:'#101114',icons:[{src:'/icon-192.png',sizes:'192x192',type:'image/png'},{src:'/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any'},{src:'/icon-maskable.png',sizes:'512x512',type:'image/png',purpose:'maskable'}]},
+      manifest:{name:'Floppy Grid',short_name:'Floppy Grid',description:'Your next episode, at a glance.',display:'standalone',start_url:'/',scope:'/',theme_color:'#101114',background_color:'#101114',icons:[{src:'/icon-192.png',sizes:'192x192',type:'image/png'},{src:'/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any'},{src:'/icon-maskable.png',sizes:'512x512',type:'image/png',purpose:'maskable'}]},
       workbox:{globPatterns:['**/*.{js,css,html,png,svg,webmanifest}'],globIgnores:['**/config.js'],navigateFallbackDenylist:[/^\/api\//,/^\/config\.js$/,/^\/health$/],runtimeCaching:[]},
     })],
   };
