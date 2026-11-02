@@ -214,3 +214,5 @@ episode is available to mark watched again. See API notes for the limitation
 when a pass contains multiple nonsequential gaps.
 
 Node 24 and npm dependency versions are documented in [dependency update notes](docs/DEPENDENCIES.md), including the TypeScript compatibility constraint.
+
+Opening a show scrolls once to the first unwatched episode in the expanded seasons, including the current rewatch pass and upcoming episodes. When all are watched it scrolls to the end. The move waits for episode loading, is cancelled by user interaction, and does not repeat after watch mutations or background refetches. Back remains available in the sticky show header.
