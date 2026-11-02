@@ -26,3 +26,9 @@ Verification: clean npm install; ESLint; all 72 tests; frontend and server build
 server smoke test covering watch mutations, same-origin protection, persistence
 across restart, and last-good snapshot fallback during an upstream outage.
 Local verification runtime: Node 24.19.0.
+
+The pulled `node:24-alpine` container was verified as **v24.22.2**. The production
+image built successfully, started with PORT=9123 (published on test port 19125),
+and returned HTTP 200 from /health. The same loopback command used by the Docker
+healthcheck passed. /config.js exposed only SERVER_CACHE, with no upstream token.
+The temporary test container and its anonymous volume were removed afterwards.
