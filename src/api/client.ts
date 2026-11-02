@@ -12,7 +12,7 @@ export async function request<T>(path:string, options:RequestInit={}):Promise<T>
   try { response=await fetch(`${url}/api/v1${path}`,{...options,signal:options.signal ? AbortSignal.any([options.signal,timeout]) : timeout,cache:'no-store',credentials:'omit',redirect:'error',headers:{...(token ? {Authorization:`Bearer ${token}`} : {}),...(options.body ? {'Content-Type':'application/json'} : {})}}); }
   catch (error) {
     if (options.signal?.aborted) throw error;
-    throw new Error('Cannot reach Floppy. Check your connection, server URL, HTTPS and CORS configuration.');
+    throw new Error('Cannot reach Floppy. Check your connection, server URL, HTTPS and CORS configuration.',{cause:error});
   }
   if (!response.ok) throw new ApiError(response.status);
   return response.json() as Promise<T>;

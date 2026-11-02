@@ -11,7 +11,7 @@ Placeholder: Home and Show screenshots from a configured installation.
 ## Architecture
 
 React, TypeScript, Vite, React Router, TanStack Query and plain CSS. The Docker
-container now includes a small Node 22 HTTP server using built-in modules only.
+container now includes a small Node 24 HTTP server using built-in modules only.
 It serves the static PWA, authenticates allowlisted Floppy requests and prepares
 an account-specific feed cache in `/data/feed.json`. There is no database.
 Floppy remains the source of truth. No React SSR is used: Vite's server build
@@ -77,7 +77,7 @@ keep the volume private. Cross-origin browser writes are rejected.
 
 ## Development and production build
 
-Node 22.12+:
+Node 24.x:
 
 ```sh
 npm install
@@ -104,13 +104,13 @@ first so static assets exist. `npm start` uses the existing process environment.
 Standard build:
 
 ```sh
-docker build -t floopy-grid .
+docker build --pull -t floopy-grid .
 ```
 
 For older Synology Docker without BuildKit use the included compatible file:
 
 ```sh
-docker build -f Dockerfile.synology -t floopy-grid .
+docker build --pull -f Dockerfile.synology -t floopy-grid .
 ```
 
 **Do not run the old sed/chmod Dockerfile modifications.** Nginx and its startup
@@ -212,3 +212,5 @@ Episode checkmarks use the season's current-pass progress and next-episode targe
 rather than lifetime episode history alone. During a 7/8 rewatch, the eighth
 episode is available to mark watched again. See API notes for the limitation
 when a pass contains multiple nonsequential gaps.
+
+Node 24 and npm dependency versions are documented in [dependency update notes](docs/DEPENDENCIES.md), including the TypeScript compatibility constraint.
